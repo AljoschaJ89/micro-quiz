@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aljoscha's Market Survivor</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="market.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1f4b0;</text></svg>">
+</head>
+<body>
+
+  <!-- ============ Header ============ -->
+  <header>
+    <div class="header-content">
+      <h1>Aljoscha's Market Survivor</h1>
+      <span class="subtitle">SMU Econ 111</span>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ============ Screen: Landing / Login ============ -->
+    <div id="market-landing" class="market-screen active">
+      <div class="card login-card">
+        <h2>Market Survivor</h2>
+        <p>Compete as a firm in a simulated market. Set quantities, earn profits, and try not to go bankrupt.</p>
+
+        <div class="form-group">
+          <label for="market-email">Your Email</label>
+          <input type="email" id="market-email" placeholder="you@smu.edu.sg">
+        </div>
+
+        <div class="form-group">
+          <label for="market-code">Game Code (to join)</label>
+          <input type="text" id="market-code" class="game-code-input" placeholder="ABC123" maxlength="6">
+        </div>
+
+        <div class="btn-row">
+          <button id="market-btn-create" class="btn-primary">Create Game</button>
+          <button id="market-btn-join" class="btn-secondary">Join Game</button>
+        </div>
+
+        <p id="market-error" class="error hidden"></p>
+      </div>
+    </div>
+
+    <!-- ============ Screen: Lobby ============ -->
+    <div id="market-lobby" class="market-screen">
+      <div class="card lobby-card">
+        <h2>Game Lobby</h2>
+
+        <!-- Game Code -->
+        <div class="game-code">
+          <span id="lobby-game-code">------</span>
+          <span class="copy-hint">Click to copy</span>
+        </div>
+
+        <!-- Player List -->
+        <div class="lobby-info" style="margin-top: 20px;">
+          <span id="lobby-player-count">0 player(s)</span>
+        </div>
+
+        <ul id="lobby-player-list" class="lobby-players">
+          <!-- Populated by JS -->
+        </ul>
+
+        <!-- Game Settings Summary -->
+        <div class="lobby-settings">
+          <h4>Game Settings</h4>
+          <div class="setting-row">
+            <span class="setting-label">Demand Curve</span>
+            <span class="setting-value">P = 100 &minus; 0.5Q</span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Round Duration</span>
+            <span class="setting-value">60s</span>
+          </div>
+          <div class="setting-row">
+            <span class="setting-label">Total Rounds</span>
+            <span class="setting-value">10</span>
+          </div>
+        </div>
+
+        <!-- Instructor: Start button / Students: Waiting -->
+        <div style="text-align: center;">
+          <button id="lobby-btn-start" class="btn-primary hidden" style="width: 100%;">Start Game</button>
+        </div>
+        <div class="lobby-waiting">
+          Waiting for instructor to start the game...
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ Screen: Round (Gameplay) ============ -->
+    <div id="market-round" class="market-screen">
+      <div class="card">
+
+        <!-- Top Bar -->
+        <div class="round-bar">
+          <div class="round-info">
+            <span class="round-label" id="round-number">Round 1 of 10</span>
+          </div>
+          <div id="round-timer" class="timer">1:00</div>
+        </div>
+
+        <!-- Chart Canvas -->
+        <div class="chart-container">
+          <canvas id="chart-canvas" width="600" height="400"></canvas>
+        </div>
+
+        <!-- Cost Function -->
+        <div class="cost-display">
+          <div class="cost-label">Your Cost Function</div>
+          <div id="cost-info">
+            <!-- Rendered by KaTeX: TC(q) = F + cq + dq^2 -->
+          </div>
+        </div>
+
+        <!-- Quantity Input -->
+        <div class="quantity-controls">
+          <label for="quantity-slider">Quantity:</label>
+          <input type="range" id="quantity-slider" min="0" max="50" value="0" step="1">
+          <input type="number" id="quantity-input" min="0" max="50" value="0" step="1">
+        </div>
+
+        <!-- Live Profit Preview -->
+        <div id="profit-preview" class="profit-preview"></div>
+
+        <!-- Submit -->
+        <div style="text-align: center;">
+          <button id="round-btn-submit" class="btn-primary" style="width: 100%; max-width: 320px;">Submit Quantity</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============ Screen: Between Rounds ============ -->
+    <div id="market-between" class="market-screen">
+      <div class="card round-summary">
+        <h2>Round Results</h2>
+
+        <!-- Bankruptcy Alert -->
+        <div id="bankruptcy-alert" class="bankruptcy-alert hidden"></div>
+
+        <!-- Market Summary -->
+        <div id="between-summary"></div>
+
+        <!-- All firms table -->
+        <table class="firms-table">
+          <thead>
+            <tr>
+              <th style="width:50px">Rank</th>
+              <th>Firm</th>
+              <th class="align-right">Quantity</th>
+              <th class="align-right">Profit</th>
+              <th class="align-right">Cumulative</th>
+            </tr>
+          </thead>
+          <tbody id="results-table-body">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+
+        <!-- Next round controls -->
+        <div style="text-align: center;">
+          <button id="between-btn-next" class="btn-primary hidden" style="width: 100%; max-width: 320px;">Next Round</button>
+        </div>
+        <div class="lobby-waiting">
+          Waiting for instructor to start next round...
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ Screen: Finished ============ -->
+    <div id="market-finished" class="market-screen">
+      <div class="card final-card">
+        <h2>Game Over &mdash; Final Leaderboard</h2>
+
+        <!-- Full leaderboard table -->
+        <table class="final-table">
+          <thead>
+            <tr>
+              <th style="width:60px">Rank</th>
+              <th>Firm</th>
+              <th style="width:120px; text-align:right">Cumulative Profit</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-table-body">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+
+        <a href="index.html" class="back-link">Back to Quiz</a>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ============ Footer ============ -->
+  <footer>
+    <p>Aljoscha's Market Survivor &mdash; SMU Econ 111 &mdash; Principles of Microeconomics</p>
+  </footer>
+
+  <!-- KaTeX -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <!-- App -->
+  <script src="config.js"></script>
+  <script src="market.js"></script>
+
+</body>
+</html>
