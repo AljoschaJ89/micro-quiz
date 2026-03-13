@@ -31,6 +31,7 @@
     loadLocalState();
     bindEvents();
     if (state.user) {
+      loadScoresFromSheet();
       showDashboard();
     }
   }
