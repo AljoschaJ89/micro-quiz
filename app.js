@@ -17,6 +17,7 @@
     user: null,           // { email }
     currentQuiz: null,    // { week, questions, answers[], shuffledChoices[], currentIndex, startTime }
     scores: {},           // { week1: { best, attempts, lastAttempt }, ... }
+    seenIds: [],          // question IDs already shown in previous quizzes
     timerInterval: null,
     timeRemaining: 0,
     pendingWeek: null,
@@ -55,6 +56,7 @@
         const data = JSON.parse(saved);
         state.user = data.user || null;
         state.scores = data.scores || {};
+        state.seenIds = data.seenIds || [];
       }
     } catch (e) { /* ignore */ }
   }
@@ -63,6 +65,7 @@
     localStorage.setItem("econ111_state", JSON.stringify({
       user: state.user,
       scores: state.scores,
+      seenIds: state.seenIds,
     }));
   }
 
@@ -210,7 +213,10 @@
       }
     });
 
-    const selected = selectQuestions(allQs, CONFIG.questionsPerQuiz);
+    // Exclude questions this student has already seen in previous weeks
+    const seenSet = new Set(state.seenIds);
+    const freshQs = allQs.filter((q) => !seenSet.has(q.id));
+    const selected = selectQuestions(freshQs.length >= CONFIG.questionsPerQuiz ? freshQs : allQs, CONFIG.questionsPerQuiz);
 
     // Shuffle choices for each question and record the mapping
     const shuffledChoices = selected.map((q) => {
@@ -411,6 +417,10 @@
     scoreData.attempts++;
     scoreData.best = Math.max(scoreData.best, correct);
     scoreData.lastAttempt = new Date().toISOString();
+    // Record seen question IDs so they won't repeat in future weeks
+    quiz.questions.forEach((q) => {
+      if (!state.seenIds.includes(q.id)) state.seenIds.push(q.id);
+    });
     saveLocalState();
     saveScoreToFirebase(weekKey, correct);
 
