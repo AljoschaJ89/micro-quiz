@@ -1,0 +1,36 @@
+name: Unlock next week
+
+on:
+  schedule:
+    # Every Wednesday at 00:00 UTC (08:00 SGT)
+    - cron: '0 0 * * 3'
+  workflow_dispatch: # allow manual trigger
+
+jobs:
+  unlock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Increment currentWeek (max 4)
+        run: |
+          CURRENT=$(grep -oP 'currentWeek:\s*\K\d+' config.js)
+          echo "Current week: $CURRENT"
+          if [ "$CURRENT" -lt 4 ]; then
+            NEXT=$((CURRENT + 1))
+            sed -i "s/currentWeek: $CURRENT/currentWeek: $NEXT/" config.js
+            echo "Updated to week $NEXT"
+            echo "CHANGED=true" >> $GITHUB_ENV
+          else
+            echo "Already at max week 4, no change"
+            echo "CHANGED=false" >> $GITHUB_ENV
+          fi
+
+      - name: Commit and push
+        if: env.CHANGED == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add config.js
+          git commit -m "Unlock week $(grep -oP 'currentWeek:\s*\K\d+' config.js)"
+          git push
