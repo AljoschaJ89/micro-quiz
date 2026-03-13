@@ -570,12 +570,9 @@
         rankHtml = `<span style="padding-left:8px">${rank}</span>`;
       }
 
-      // Anonymize email: show first part + domain
-      const emailDisplay = entry.email.split("@")[0].slice(0, 3) + "***@" + entry.email.split("@")[1];
-
       tr.innerHTML = `
         <td>${rankHtml}</td>
-        <td>${isCurrentUser ? entry.email + " (you)" : emailDisplay}</td>
+        <td>${entry.email}${isCurrentUser ? " (you)" : ""}</td>
         <td style="text-align:right;font-weight:600">${entry.score}</td>
       `;
       tbody.appendChild(tr);
