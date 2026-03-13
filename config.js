@@ -15,6 +15,7 @@ const CONFIG = {
   quizDuration: 30 * 60, // 30 minutes in seconds
   questionsPerQuiz: 15,
   allowRetakes: false, // one attempt per week per student
+  adminEmails: ["ajanssen@smu.edu.sg"], // these emails can retake quizzes indefinitely
 
   // Approved student emails (lowercase). Set requireApprovedEmail = true to enforce.
   requireApprovedEmail: true,

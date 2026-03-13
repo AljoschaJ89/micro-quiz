@@ -162,7 +162,8 @@
       const scoreData = state.scores[key];
       if (scoreData) totalScore += scoreData.best;
 
-      const isCompleted = scoreData && scoreData.attempts > 0;
+      const isAdmin = state.user && CONFIG.adminEmails && CONFIG.adminEmails.includes(state.user.email);
+      const isCompleted = scoreData && scoreData.attempts > 0 && !isAdmin;
 
       const card = document.createElement("div");
       card.className = "week-card" + (isLocked ? " locked" : "") + (isCompleted ? " completed" : "");
@@ -171,8 +172,8 @@
         <div class="week-title">${week.title}</div>
         <div class="week-topics">${week.subtitle}</div>
         <div class="week-meta">
-          <span>${isCompleted ? "Score:" : "Not attempted"}</span>
-          ${isCompleted ? '<span class="best-score">' + scoreData.best + "/" + CONFIG.questionsPerQuiz + "</span>" : ""}
+          <span>${isCompleted ? "Score:" : (scoreData && scoreData.attempts > 0 ? "Best:" : "Not attempted")}</span>
+          ${scoreData && scoreData.attempts > 0 ? '<span class="best-score">' + scoreData.best + "/" + CONFIG.questionsPerQuiz + "</span>" : ""}
         </div>
         ${isLocked ? '<span class="lock-icon">&#x1f512;</span>' : ""}
       `;
