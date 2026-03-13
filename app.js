@@ -23,29 +23,15 @@
     pendingWeek: null,
   };
 
-  let db = null; // Firestore reference (if configured)
-
   // ---- DOM refs ----
   const $ = (id) => document.getElementById(id);
 
   // ---- Init ----
   function init() {
-    initFirebase();
     loadLocalState();
     bindEvents();
     if (state.user) {
       showDashboard();
-    }
-  }
-
-  function initFirebase() {
-    if (CONFIG.firebase && typeof firebase !== "undefined") {
-      try {
-        firebase.initializeApp(CONFIG.firebase);
-        db = firebase.firestore();
-      } catch (e) {
-        console.warn("Firebase init failed:", e);
-      }
     }
   }
 
@@ -121,7 +107,7 @@
 
     state.user = { email };
     saveLocalState();
-    loadScoresFromFirebase();
+    loadScoresFromSheet();
     showDashboard();
   }
 
@@ -422,7 +408,7 @@
       if (!state.seenIds.includes(q.id)) state.seenIds.push(q.id);
     });
     saveLocalState();
-    saveScoreToFirebase(weekKey, correct);
+    saveScoreToSheet(weekKey, correct);
 
     // Show results
     $("result-score").textContent = correct;
@@ -595,74 +581,63 @@
     });
   }
 
-  // ---- Firebase sync ----
+  // ---- Google Sheets sync ----
   let leaderboardCache = {};
 
-  function loadScoresFromFirebase() {
-    if (!db || !state.user) return;
-    const email = state.user.email;
-    const docId = email.replace(/[.@]/g, "_");
+  function loadScoresFromSheet() {
+    if (!CONFIG.sheetsApiUrl || !state.user) return;
 
-    // Load own scores
-    db.collection("scores").doc(docId).get().then((doc) => {
-      if (doc.exists) {
-        const data = doc.data();
-        const weeks = data.weeks || {};
-        Object.keys(weeks).forEach((wk) => {
-          if (!state.scores[wk] || weeks[wk].best > state.scores[wk].best) {
-            state.scores[wk] = {
-              best: weeks[wk].best,
-              attempts: weeks[wk].attempts || 1,
-              lastAttempt: weeks[wk].lastAttempt || null,
-            };
-          }
-        });
-        saveLocalState();
-        renderDashboard();
-      }
-    }).catch(() => {});
+    fetch(CONFIG.sheetsApiUrl)
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.status !== "ok") return;
+        const allData = json.data;
 
-    // Load all scores for leaderboard
-    db.collection("scores").get().then((snapshot) => {
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        const weeks = data.weeks || {};
-        leaderboardCache[data.email] = {};
-        Object.keys(weeks).forEach((wk) => {
-          leaderboardCache[data.email][wk] = weeks[wk].best;
-        });
-      });
-    }).catch(() => {});
+        // Merge own scores (keep higher)
+        const myData = allData[state.user.email];
+        if (myData) {
+          Object.keys(myData).forEach((wk) => {
+            if (!state.scores[wk] || myData[wk] > state.scores[wk].best) {
+              state.scores[wk] = {
+                best: myData[wk],
+                attempts: state.scores[wk] ? state.scores[wk].attempts : 1,
+                lastAttempt: state.scores[wk] ? state.scores[wk].lastAttempt : null,
+              };
+            }
+          });
+          saveLocalState();
+          renderDashboard();
+        }
+
+        // Populate leaderboard cache
+        leaderboardCache = allData;
+      })
+      .catch((e) => console.warn("Sheet load failed:", e));
   }
 
-  function saveScoreToFirebase(weekKey, score) {
-    if (!db || !state.user) return;
+  function saveScoreToSheet(weekKey, score) {
+    if (!CONFIG.sheetsApiUrl || !state.user) return;
     const email = state.user.email;
-    const docId = email.replace(/[.@]/g, "_");
     const scoreData = state.scores[weekKey];
 
-    const weekData = {};
-    weekData["weeks." + weekKey] = {
+    const params = new URLSearchParams({
+      action: "save",
+      email: email,
+      weekKey: weekKey,
       best: scoreData.best,
       attempts: scoreData.attempts,
       lastAttempt: scoreData.lastAttempt,
-    };
+    });
 
-    db.collection("scores").doc(docId).set({
-      email: email,
-      weeks: Object.keys(state.scores).reduce((acc, wk) => {
-        acc[wk] = {
-          best: state.scores[wk].best,
-          attempts: state.scores[wk].attempts,
-          lastAttempt: state.scores[wk].lastAttempt,
-        };
-        return acc;
-      }, {}),
-    }, { merge: true }).catch((e) => console.warn("Firebase save failed:", e));
-
-    // Update cache
-    if (!leaderboardCache[email]) leaderboardCache[email] = {};
-    leaderboardCache[email][weekKey] = scoreData.best;
+    fetch(CONFIG.sheetsApiUrl + "?" + params.toString())
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.status === "ok") {
+          if (!leaderboardCache[email]) leaderboardCache[email] = {};
+          leaderboardCache[email][weekKey] = scoreData.best;
+        }
+      })
+      .catch((e) => console.warn("Sheet save failed:", e));
   }
 
   // ---- Helpers ----

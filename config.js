@@ -113,19 +113,7 @@ const CONFIG = {
     "crystal.lim.2025@economics.smu.edu.sg",
   ],
 
-  // Firebase configuration (optional — for shared online leaderboard)
-  // Without Firebase, scores are stored in the browser only.
-  // To enable: create a free project at https://console.firebase.google.com,
-  // add a web app, copy the config object here, and enable Firestore.
-  firebase: null,
-  /*
-  firebase: {
-    apiKey: "AIza...",
-    authDomain: "your-project.firebaseapp.com",
-    projectId: "your-project-id",
-    storageBucket: "your-project.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdef"
-  },
-  */
+  // Google Sheets API for shared leaderboard (free, no billing required)
+  // Deploy the Apps Script as a web app and paste the URL here.
+  sheetsApiUrl: "https://script.google.com/macros/s/AKfycbwfSLX6hblTqQGrpLgtZB4-5Z_9BRpwWDYG6xF0_NRlh31jaNZuTVHIP9nWSXzC2GtmPw/exec",
 };
