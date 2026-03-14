@@ -609,6 +609,14 @@
 
         // Populate leaderboard cache
         leaderboardCache = allData;
+
+        // Sync any local scores that aren't in the sheet yet
+        const mySheetData = allData[state.user.email] || {};
+        Object.keys(state.scores).forEach((wk) => {
+          if (state.scores[wk].best > 0 && (!mySheetData[wk] || state.scores[wk].best > mySheetData[wk])) {
+            saveScoreToSheet(wk, state.scores[wk].best);
+          }
+        });
       })
       .catch((e) => console.warn("Sheet load failed:", e));
   }
