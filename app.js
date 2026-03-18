@@ -482,16 +482,21 @@
 
     if (activeTab === "weekly") {
       weekSelectContainer.classList.remove("hidden");
-      // Populate week selector
+      // Populate week selector (preserve current selection)
+      const prevSelection = weekSelect.value;
       weekSelect.innerHTML = "";
       const weekKeys = Object.keys(WEEKS).sort();
       weekKeys.forEach((key) => {
-        const num = key.replace("week", "");
+        const weekNum = parseInt(key.replace("week", ""));
+        if (weekNum > CONFIG.currentWeek) return; // only show unlocked weeks
         const opt = document.createElement("option");
         opt.value = key;
-        opt.textContent = `Week ${num}: ${WEEKS[key].title}`;
+        opt.textContent = `Week ${weekNum}: ${WEEKS[key].title}`;
         weekSelect.appendChild(opt);
       });
+      if (prevSelection && weekSelect.querySelector(`option[value="${prevSelection}"]`)) {
+        weekSelect.value = prevSelection;
+      }
       renderWeeklyLeaderboard(weekSelect.value);
     } else {
       weekSelectContainer.classList.add("hidden");
