@@ -9,7 +9,7 @@ const CONFIG = {
   instructor: "Aljoscha Janssen",
 
   // Currently active week (students can play weeks 1 through this number)
-  currentWeek: 1,
+  currentWeek: 2,
 
   // Quiz settings
   quizDuration: 30 * 60, // 30 minutes in seconds
